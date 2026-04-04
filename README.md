@@ -55,14 +55,15 @@ over HTTP instead of opened directly from the file system.
 
 The repository includes [`.github/workflows/deploy-pages.yml`](./.github/workflows/deploy-pages.yml).
 The workflow builds the sample package from `examples/sample-apartment` and
-publishes it to GitHub Pages on pushes to `main`.
+publishes the generated static site to the `gh-pages` branch on pushes to `main`.
 
 Repository settings:
 
 1. Open `Settings`.
 2. Open `Pages`.
-3. Set `Build and deployment` to `GitHub Actions`.
-4. Push to `main` or run the workflow manually.
+3. Set `Source` to `Deploy from a branch`.
+4. Select branch `gh-pages` and folder `/ (root)`.
+5. Push to `main` or run the workflow manually.
 
 Published URL format:
 

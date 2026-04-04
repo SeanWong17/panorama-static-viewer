@@ -51,14 +51,15 @@ python3 -m http.server 8000
 ## GitHub Pages
 
 仓库内置了 [`.github/workflows/deploy-pages.yml`](./.github/workflows/deploy-pages.yml)。
-工作流会使用 `examples/sample-apartment` 构建示例页面，并在推送到 `main` 时发布到 GitHub Pages。
+工作流会使用 `examples/sample-apartment` 构建示例页面，并在推送到 `main` 时把生成结果发布到 `gh-pages` 分支。
 
 仓库设置步骤：
 
 1. 打开 `Settings`
 2. 打开 `Pages`
-3. 在 `Build and deployment` 中选择 `GitHub Actions`
-4. 推送到 `main`，或者手动运行工作流
+3. 在 `Source` 中选择 `Deploy from a branch`
+4. 选择分支 `gh-pages`，目录选 `/ (root)`
+5. 推送到 `main`，或者手动运行工作流
 
 预览地址格式：
 
