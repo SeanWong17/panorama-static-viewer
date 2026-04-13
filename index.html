@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Open Panorama Viewer</title>
+  <link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+  <div id="app">
+    <aside id="sidebar">
+      <div class="brand" id="brand">Open Panorama</div>
+      <div id="summary"></div>
+      <div class="section-title" id="scene-list-title">Scenes</div>
+      <div id="scene-list"></div>
+      <div class="section-title" id="usage-title">Usage</div>
+      <div class="usage">
+        <div id="usage-drag">Drag: rotate view</div>
+        <div id="usage-wheel">Wheel: zoom</div>
+        <div id="usage-reset">Double click: reset</div>
+        <div id="usage-idle">Idle: slow auto-rotate</div>
+      </div>
+    </aside>
+    <main id="viewer-shell">
+      <div id="viewer"></div>
+      <div id="hud">
+        <div id="scene-title"></div>
+        <div id="scene-meta"></div>
+      </div>
+      <div id="hotspots"></div>
+      <div id="viewer-controls">
+        <button id="toggle-sidebar" class="floating-button" type="button">Scenes</button>
+        <button id="toggle-plan" class="floating-button" type="button">Plan</button>
+        <button id="toggle-hud" class="floating-button" type="button">Hide View</button>
+        <button id="toggle-language" class="floating-button" type="button">EN</button>
+      </div>
+      <section id="tv-overlay-panel" class="overlay-panel hidden">
+        <div class="overlay-panel-header">
+          <div>
+            <div class="overlay-panel-title" id="tv-overlay-title">TV Overlay</div>
+            <div class="overlay-panel-caption" id="tv-overlay-caption">Scene 3 wall-mapped preview</div>
+          </div>
+        </div>
+        <div class="tv-size-toolbar" id="tv-size-toolbar"></div>
+        <label class="overlay-field">
+          <span id="tv-video-file-label">Local video</span>
+          <input id="tv-video-file" type="file" accept="video/*">
+        </label>
+        <div class="overlay-field">
+          <span id="tv-adjust-label">Position adjust</span>
+          <div class="tv-adjust-grid">
+            <button id="tv-adjust-up" class="ghost-button" type="button">↑</button>
+            <button id="tv-adjust-left" class="ghost-button" type="button">←</button>
+            <button id="tv-adjust-reset" class="ghost-button" type="button">Reset</button>
+            <button id="tv-adjust-right" class="ghost-button" type="button">→</button>
+            <button id="tv-adjust-down" class="ghost-button" type="button">↓</button>
+          </div>
+        </div>
+        <div class="overlay-panel-meta">Load a local video for stable looped playback on the TV wall.</div>
+        <div class="overlay-panel-meta" id="tv-overlay-meta"></div>
+      </section>
+      <section id="plan-panel">
+        <div class="plan-header">
+          <div>
+            <div class="plan-title" id="plan-title">Floor Plan</div>
+            <div id="plan-caption"></div>
+          </div>
+          <button id="toggle-plan-panel" class="ghost-button" type="button">Collapse</button>
+        </div>
+        <div id="plan-stage">
+          <img id="plan-image" alt="Floor plan">
+          <div id="plan-spots"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="assets/three.min.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>

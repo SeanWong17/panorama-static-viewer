@@ -1,0 +1,514 @@
+{
+  "designId": "sample-design",
+  "designName": "Sample Apartment",
+  "designNameI18n": {
+    "en": "Sample Apartment",
+    "zh-CN": "示例户型"
+  },
+  "i18n": {
+    "defaultLanguage": "zh-CN",
+    "supportedLanguages": [
+      "zh-CN",
+      "en"
+    ]
+  },
+  "startScene": "scene-3",
+  "levelId": "level-1",
+  "sceneCount": 7,
+  "tvOverlay": {
+    "scenes": {
+      "scene-3": {
+        "face": "front",
+        "imageSize": {
+          "width": 1500,
+          "height": 1500
+        },
+        "center": {
+          "x": 612,
+          "y": 749
+        },
+        "bounds": {
+          "left": 293,
+          "right": 932,
+          "top": 520,
+          "bottom": 977
+        },
+        "mmPerPixel": {
+          "x": 4.57,
+          "y": 4.52
+        },
+        "borderPx": 3,
+        "defaultSize": 75,
+        "sizes": [
+          55,
+          65,
+          75,
+          85,
+          98,
+          100
+        ],
+        "defaultVideo": "assets/videos/test.mp4"
+      }
+    }
+  },
+  "plan": {
+    "image": "assets/plan-level-1.jpg",
+    "canvas": {
+      "width": 180,
+      "height": 185
+    },
+    "imageRect": {
+      "x": 10,
+      "y": 10,
+      "width": 160,
+      "height": 165
+    },
+    "spots": [
+      {
+        "sceneId": "scene-1",
+        "x": 72,
+        "y": 76,
+        "label": "多功能室"
+      },
+      {
+        "sceneId": "scene-3",
+        "x": 84,
+        "y": 135,
+        "label": "客餐厅"
+      },
+      {
+        "sceneId": "scene-5",
+        "x": 160,
+        "y": 139,
+        "label": "南次卧"
+      },
+      {
+        "sceneId": "scene-4",
+        "x": 128,
+        "y": 80,
+        "label": "客餐厅"
+      },
+      {
+        "sceneId": "scene-6",
+        "x": 122,
+        "y": 165,
+        "label": "客餐厅"
+      },
+      {
+        "sceneId": "scene-2",
+        "x": 71,
+        "y": 150,
+        "label": "主卧"
+      },
+      {
+        "sceneId": "scene-7",
+        "x": 120,
+        "y": 137,
+        "label": "客餐厅"
+      }
+    ]
+  },
+  "scenes": [
+    {
+      "id": "scene-1",
+      "title": "多功能室",
+      "titleI18n": {
+        "en": "Flex Room",
+        "zh-CN": "多功能室"
+      },
+      "levelId": "level-1",
+      "obsPicId": "view-1",
+      "metaLabelI18n": {
+        "en": "View 1",
+        "zh-CN": "视角 1"
+      },
+      "roomIndex": "room-1",
+      "startYaw": 270.0,
+      "startPitch": 0,
+      "thumb": "assets/thumbs/scene-1.jpg",
+      "faces": {
+        "front": "assets/scenes/scene-1/f.jpg",
+        "back": "assets/scenes/scene-1/b.jpg",
+        "left": "assets/scenes/scene-1/l.jpg",
+        "right": "assets/scenes/scene-1/r.jpg",
+        "up": "assets/scenes/scene-1/u.jpg",
+        "down": "assets/scenes/scene-1/d.jpg"
+      },
+      "hotspots": [
+        {
+          "targetScene": "scene-3",
+          "targetTitle": "客餐厅",
+          "yaw": -76.48604999999998,
+          "pitch": 0.0
+        }
+      ],
+      "camera": {
+        "position": {
+          "x": -2082.9883,
+          "y": 1773.5797,
+          "z": 1300.0
+        },
+        "lookAtPos": {
+          "x": -3782.9883,
+          "y": 1773.5797,
+          "z": 1300.0
+        },
+        "obsPicId": "view-1"
+      }
+    },
+    {
+      "id": "scene-2",
+      "title": "主卧",
+      "titleI18n": {
+        "en": "Main Bedroom",
+        "zh-CN": "主卧"
+      },
+      "levelId": "level-1",
+      "obsPicId": "view-2",
+      "metaLabelI18n": {
+        "en": "View 2",
+        "zh-CN": "视角 2"
+      },
+      "roomIndex": "room-2",
+      "startYaw": 270.0,
+      "startPitch": 0,
+      "thumb": "assets/thumbs/scene-2.jpg",
+      "faces": {
+        "front": "assets/scenes/scene-2/f.jpg",
+        "back": "assets/scenes/scene-2/b.jpg",
+        "left": "assets/scenes/scene-2/l.jpg",
+        "right": "assets/scenes/scene-2/r.jpg",
+        "up": "assets/scenes/scene-2/u.jpg",
+        "down": "assets/scenes/scene-2/d.jpg"
+      },
+      "hotspots": [
+        {
+          "targetScene": "scene-3",
+          "targetTitle": "客餐厅",
+          "yaw": 86.765015,
+          "pitch": 0.0
+        }
+      ],
+      "camera": {
+        "position": {
+          "x": -2162.571,
+          "y": -3744.153,
+          "z": 1300.0
+        },
+        "lookAtPos": {
+          "x": -3862.571,
+          "y": -3744.153,
+          "z": 1300.0
+        },
+        "obsPicId": "view-2"
+      }
+    },
+    {
+      "id": "scene-3",
+      "title": "客餐厅",
+      "titleI18n": {
+        "en": "Living and Dining",
+        "zh-CN": "客餐厅"
+      },
+      "levelId": "level-1",
+      "obsPicId": "view-3",
+      "metaLabelI18n": {
+        "en": "View 3",
+        "zh-CN": "视角 3"
+      },
+      "roomIndex": "room-3",
+      "startYaw": 90.0,
+      "startPitch": 0,
+      "thumb": "assets/thumbs/scene-3.jpg",
+      "faces": {
+        "front": "assets/scenes/scene-3/f.jpg",
+        "back": "assets/scenes/scene-3/b.jpg",
+        "left": "assets/scenes/scene-3/l.jpg",
+        "right": "assets/scenes/scene-3/r.jpg",
+        "up": "assets/scenes/scene-3/u.jpg",
+        "down": "assets/scenes/scene-3/d.jpg"
+      },
+      "hotspots": [
+        {
+          "targetScene": "scene-4",
+          "targetTitle": "客餐厅",
+          "yaw": -51.06957999999997,
+          "pitch": 0.0
+        },
+        {
+          "targetScene": "scene-6",
+          "targetTitle": "客餐厅",
+          "yaw": 38.250248,
+          "pitch": 0.0
+        },
+        {
+          "targetScene": "scene-7",
+          "targetTitle": "客餐厅",
+          "yaw": 4.27063,
+          "pitch": 0.0
+        }
+      ],
+      "camera": {
+        "position": {
+          "x": -1234.1063,
+          "y": -2603.4678,
+          "z": 1300.0
+        },
+        "lookAtPos": {
+          "x": 465.89365,
+          "y": -2603.4678,
+          "z": 1300.0
+        },
+        "obsPicId": "view-3"
+      }
+    },
+    {
+      "id": "scene-4",
+      "title": "客餐厅",
+      "titleI18n": {
+        "en": "Living and Dining",
+        "zh-CN": "客餐厅"
+      },
+      "levelId": "level-1",
+      "obsPicId": "view-4",
+      "metaLabelI18n": {
+        "en": "View 4",
+        "zh-CN": "视角 4"
+      },
+      "roomIndex": "room-3",
+      "startYaw": 270.0,
+      "startPitch": 0,
+      "thumb": "assets/thumbs/scene-4.jpg",
+      "faces": {
+        "front": "assets/scenes/scene-4/f.jpg",
+        "back": "assets/scenes/scene-4/b.jpg",
+        "left": "assets/scenes/scene-4/l.jpg",
+        "right": "assets/scenes/scene-4/r.jpg",
+        "up": "assets/scenes/scene-4/u.jpg",
+        "down": "assets/scenes/scene-4/d.jpg"
+      },
+      "hotspots": [
+        {
+          "targetScene": "scene-3",
+          "targetTitle": "客餐厅",
+          "yaw": -51.06957999999997,
+          "pitch": 0.0
+        },
+        {
+          "targetScene": "scene-6",
+          "targetTitle": "客餐厅",
+          "yaw": -86.1859,
+          "pitch": 4.0
+        },
+        {
+          "targetScene": "scene-2",
+          "targetTitle": "主卧",
+          "yaw": -25.40186,
+          "pitch": 0.0
+        },
+        {
+          "targetScene": "scene-7",
+          "targetTitle": "客餐厅",
+          "yaw": -82.26641999999998,
+          "pitch": -4.0
+        }
+      ],
+      "camera": {
+        "position": {
+          "x": 2072.9963,
+          "y": 1490.619,
+          "z": 1300.0
+        },
+        "lookAtPos": {
+          "x": 372.99625,
+          "y": 1490.619,
+          "z": 1300.0
+        },
+        "obsPicId": "view-4"
+      }
+    },
+    {
+      "id": "scene-5",
+      "title": "南次卧",
+      "titleI18n": {
+        "en": "South Bedroom",
+        "zh-CN": "南次卧"
+      },
+      "levelId": "level-1",
+      "obsPicId": "view-5",
+      "metaLabelI18n": {
+        "en": "View 5",
+        "zh-CN": "视角 5"
+      },
+      "roomIndex": "room-4",
+      "startYaw": 270.0,
+      "startPitch": 0,
+      "thumb": "assets/thumbs/scene-5.jpg",
+      "faces": {
+        "front": "assets/scenes/scene-5/f.jpg",
+        "back": "assets/scenes/scene-5/b.jpg",
+        "left": "assets/scenes/scene-5/l.jpg",
+        "right": "assets/scenes/scene-5/r.jpg",
+        "up": "assets/scenes/scene-5/u.jpg",
+        "down": "assets/scenes/scene-5/d.jpg"
+      },
+      "hotspots": [
+        {
+          "targetScene": "scene-3",
+          "targetTitle": "客餐厅",
+          "yaw": -52.344600000000014,
+          "pitch": 0.0
+        }
+      ],
+      "camera": {
+        "position": {
+          "x": 4531.217,
+          "y": -2895.271,
+          "z": 1300.0
+        },
+        "lookAtPos": {
+          "x": 2831.2168,
+          "y": -2895.271,
+          "z": 1300.0
+        },
+        "obsPicId": "view-5"
+      }
+    },
+    {
+      "id": "scene-6",
+      "title": "客餐厅",
+      "titleI18n": {
+        "en": "Living and Dining",
+        "zh-CN": "客餐厅"
+      },
+      "levelId": "level-1",
+      "obsPicId": "view-6",
+      "metaLabelI18n": {
+        "en": "View 6",
+        "zh-CN": "视角 6"
+      },
+      "roomIndex": "room-3",
+      "startYaw": 90.0,
+      "startPitch": 0,
+      "thumb": "assets/thumbs/scene-6.jpg",
+      "faces": {
+        "front": "assets/scenes/scene-6/f.jpg",
+        "back": "assets/scenes/scene-6/b.jpg",
+        "left": "assets/scenes/scene-6/l.jpg",
+        "right": "assets/scenes/scene-6/r.jpg",
+        "up": "assets/scenes/scene-6/u.jpg",
+        "down": "assets/scenes/scene-6/d.jpg"
+      },
+      "hotspots": [
+        {
+          "targetScene": "scene-1",
+          "targetTitle": "多功能室",
+          "yaw": -125.4213,
+          "pitch": 0.0
+        },
+        {
+          "targetScene": "scene-3",
+          "targetTitle": "客餐厅",
+          "yaw": -141.74974,
+          "pitch": 0.0
+        },
+        {
+          "targetScene": "scene-5",
+          "targetTitle": "南次卧",
+          "yaw": -19.768430000000023,
+          "pitch": 0.0
+        },
+        {
+          "targetScene": "scene-4",
+          "targetTitle": "客餐厅",
+          "yaw": -86.1859,
+          "pitch": 0.0
+        },
+        {
+          "targetScene": "scene-7",
+          "targetTitle": "客餐厅",
+          "yaw": -94.39870000000002,
+          "pitch": 0.0
+        }
+      ],
+      "camera": {
+        "position": {
+          "x": 1648.5553,
+          "y": -4875.9956,
+          "z": 1300.0
+        },
+        "lookAtPos": {
+          "x": 3348.5552,
+          "y": -4875.9956,
+          "z": 1300.0
+        },
+        "obsPicId": "view-6"
+      }
+    },
+    {
+      "id": "scene-7",
+      "title": "客餐厅",
+      "titleI18n": {
+        "en": "Living and Dining",
+        "zh-CN": "客餐厅"
+      },
+      "levelId": "level-1",
+      "obsPicId": "view-7",
+      "metaLabelI18n": {
+        "en": "View 7",
+        "zh-CN": "视角 7"
+      },
+      "roomIndex": "room-3",
+      "startYaw": 270.0,
+      "startPitch": 0,
+      "thumb": "assets/thumbs/scene-7.jpg",
+      "faces": {
+        "front": "assets/scenes/scene-7/f.jpg",
+        "back": "assets/scenes/scene-7/b.jpg",
+        "left": "assets/scenes/scene-7/l.jpg",
+        "right": "assets/scenes/scene-7/r.jpg",
+        "up": "assets/scenes/scene-7/u.jpg",
+        "down": "assets/scenes/scene-7/d.jpg"
+      },
+      "hotspots": [
+        {
+          "targetScene": "scene-1",
+          "targetTitle": "多功能室",
+          "yaw": 42.722652,
+          "pitch": 0.0
+        },
+        {
+          "targetScene": "scene-3",
+          "targetTitle": "客餐厅",
+          "yaw": 4.27063,
+          "pitch": 0.0
+        },
+        {
+          "targetScene": "scene-4",
+          "targetTitle": "客餐厅",
+          "yaw": 97.7336,
+          "pitch": 0.0
+        },
+        {
+          "targetScene": "scene-6",
+          "targetTitle": "客餐厅",
+          "yaw": -94.39870000000002,
+          "pitch": 0.0
+        }
+      ],
+      "camera": {
+        "position": {
+          "x": 1489.3899,
+          "y": -2806.846,
+          "z": 1300.0
+        },
+        "lookAtPos": {
+          "x": -210.61009,
+          "y": -2806.846,
+          "z": 1300.0
+        },
+        "obsPicId": "view-7"
+      }
+    }
+  ]
+}
