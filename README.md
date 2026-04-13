@@ -12,6 +12,7 @@ switching.
 - Local packaging script with manifest validation
 - Scene list, hotspots, and floor plan navigation
 - Built-in UI language switch for `en` and `zh-CN`
+- Scene 3 TV wall overlay with local video preview, size presets, and position adjust
 - GitHub Pages workflow for online preview
 - Anonymized sample dataset for local testing
 
@@ -26,6 +27,9 @@ panorama-static-viewer/
   vendor/
   examples/
     sample-apartment/
+      assets/videos/test.mp4
+  media/
+    tv-overlay-demo.gif
 ```
 
 ## Local Preview
@@ -50,6 +54,11 @@ Open `http://127.0.0.1:8000/` in your browser.
 
 The viewer loads `manifest.json` with `fetch`, so `index.html` should be served
 over HTTP instead of opened directly from the file system.
+
+The sample apartment includes a default TV demo video for Scene 3. You can also
+replace it in the viewer with another local file at runtime.
+
+![TV overlay demo](./media/tv-overlay-demo.gif)
 
 ## GitHub Pages
 
@@ -148,6 +157,31 @@ Example:
 
 Optional fields such as `plan`, `roomIndex`, `obsPicId`, `metaLabel`, and
 localized content are preserved in the packaged output.
+
+Optional TV overlay config example:
+
+```json
+{
+  "tvOverlay": {
+    "scenes": {
+      "scene-3": {
+        "face": "front",
+        "imageSize": { "width": 1500, "height": 1500 },
+        "center": { "x": 612, "y": 749 },
+        "bounds": { "left": 293, "right": 932, "top": 520, "bottom": 977 },
+        "mmPerPixel": { "x": 4.57, "y": 4.52 },
+        "borderPx": 3,
+        "defaultSize": 75,
+        "sizes": [55, 65, 75, 85, 98, 100],
+        "defaultVideo": "assets/videos/test.mp4"
+      }
+    }
+  }
+}
+```
+
+`defaultVideo` must point to a packaged local asset. The runtime UI only accepts
+local file selection.
 
 ## Build Process
 

@@ -31,8 +31,34 @@
       <div id="viewer-controls">
         <button id="toggle-sidebar" class="floating-button" type="button">Scenes</button>
         <button id="toggle-plan" class="floating-button" type="button">Plan</button>
+        <button id="toggle-hud" class="floating-button" type="button">Hide View</button>
         <button id="toggle-language" class="floating-button" type="button">EN</button>
       </div>
+      <section id="tv-overlay-panel" class="overlay-panel hidden">
+        <div class="overlay-panel-header">
+          <div>
+            <div class="overlay-panel-title" id="tv-overlay-title">TV Overlay</div>
+            <div class="overlay-panel-caption" id="tv-overlay-caption">Scene 3 wall-mapped preview</div>
+          </div>
+        </div>
+        <div class="tv-size-toolbar" id="tv-size-toolbar"></div>
+        <label class="overlay-field">
+          <span id="tv-video-file-label">Local video</span>
+          <input id="tv-video-file" type="file" accept="video/*">
+        </label>
+        <div class="overlay-field">
+          <span id="tv-adjust-label">Position adjust</span>
+          <div class="tv-adjust-grid">
+            <button id="tv-adjust-up" class="ghost-button" type="button">↑</button>
+            <button id="tv-adjust-left" class="ghost-button" type="button">←</button>
+            <button id="tv-adjust-reset" class="ghost-button" type="button">Reset</button>
+            <button id="tv-adjust-right" class="ghost-button" type="button">→</button>
+            <button id="tv-adjust-down" class="ghost-button" type="button">↓</button>
+          </div>
+        </div>
+        <div class="overlay-panel-meta">Load a local video for stable looped playback on the TV wall.</div>
+        <div class="overlay-panel-meta" id="tv-overlay-meta"></div>
+      </section>
       <section id="plan-panel">
         <div class="plan-header">
           <div>

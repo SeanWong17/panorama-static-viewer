@@ -1,5 +1,19 @@
 const FACE_ORDER = ['right', 'left', 'up', 'down', 'front', 'back'];
 const LANGUAGE_STORAGE_KEY = 'open-panorama-language';
+const HOTSPOT_LABEL_VISIBILITY_STORAGE_KEY = 'open-panorama-hotspot-label-visible';
+const TV_SIZE_PRESETS = {
+  55: { width: 121.8, height: 68.5, diagonal: 139.7 },
+  65: { width: 143.9, height: 80.9, diagonal: 165.1 },
+  75: { width: 166.0, height: 93.4, diagonal: 190.5 },
+  85: { width: 188.2, height: 105.8, diagonal: 215.9 },
+  98: { width: 216.9, height: 122.0, diagonal: 248.9 },
+  100: { width: 221.4, height: 124.5, diagonal: 254.0 },
+};
+const TV_CANVAS_SIZE = { width: 1280, height: 720 };
+const TV_PLACEHOLDER_TEXT = {
+  en: 'Load a video to preview playback on the TV wall.',
+  'zh-CN': '加载视频后即可预览电视在墙面的播放效果。',
+};
 const BUILTIN_UI_MESSAGES = {
   en: {
     pageTitle: '{name} | Open Panorama Viewer',
@@ -13,6 +27,8 @@ const BUILTIN_UI_MESSAGES = {
     scenesButton: 'Scenes',
     planButton: 'Plan',
     hidePlanButton: 'Hide Plan',
+    hideHudButton: 'Hide View',
+    showHudButton: 'Show View',
     planTitle: 'Floor Plan',
     expand: 'Expand',
     collapse: 'Collapse',
@@ -25,6 +41,14 @@ const BUILTIN_UI_MESSAGES = {
     sceneCount: '{count} scenes',
     summaryOffline: 'offline package',
     summaryPlan: 'plan cached',
+    tvOverlayTitle: 'TV Overlay',
+    tvOverlayCaption: 'Scene 3 wall-mapped preview',
+    tvVideoFileLabel: 'Local video',
+    tvAdjustLabel: 'Position adjust',
+    tvAdjustReset: 'Reset',
+    tvSizeLabel: '{size}"',
+    tvMetaIdle: 'Screen center ({x}, {y}) | offset ({offsetX}, {offsetY}) px | {width} x {height} cm',
+    tvMetaPlaying: '{size}" | {width} x {height} cm | center ({x}, {y}) | offset ({offsetX}, {offsetY}) px',
   },
   'zh-CN': {
     pageTitle: '{name} | Open Panorama Viewer',
@@ -38,6 +62,8 @@ const BUILTIN_UI_MESSAGES = {
     scenesButton: '场景',
     planButton: '户型图',
     hidePlanButton: '隐藏户型图',
+    hideHudButton: '隐藏视角',
+    showHudButton: '显示视角',
     planTitle: '户型导航',
     expand: '展开',
     collapse: '收起',
@@ -50,6 +76,14 @@ const BUILTIN_UI_MESSAGES = {
     sceneCount: '{count} 个场景',
     summaryOffline: '离线包',
     summaryPlan: '已缓存户型图',
+    tvOverlayTitle: '电视映射',
+    tvOverlayCaption: '场景 3 电视墙尺寸预览',
+    tvVideoFileLabel: '本地视频',
+    tvAdjustLabel: '位置微调',
+    tvAdjustReset: '重置',
+    tvSizeLabel: '{size} 英寸',
+    tvMetaIdle: '屏幕中心 ({x}, {y}) | 偏移 ({offsetX}, {offsetY}) px | {width} x {height} cm',
+    tvMetaPlaying: '{size} 英寸 | {width} x {height} cm | 屏幕中心 ({x}, {y}) | 偏移 ({offsetX}, {offsetY}) px',
   },
 };
 const LANGUAGE_LABELS = {
@@ -98,6 +132,70 @@ function parseViewVector(yawDeg, pitchDeg) {
   const y = Math.sin(pitch);
   const z = Math.cos(pitch) * Math.cos(yaw);
   return new THREE.Vector3(x, y, z);
+}
+
+function getTvPresetSize(size) {
+  return TV_SIZE_PRESETS[String(size)] || TV_SIZE_PRESETS[size] || null;
+}
+
+function buildTvSizeList(sceneConfig) {
+  const configured = Array.isArray(sceneConfig?.sizes) && sceneConfig.sizes.length
+    ? sceneConfig.sizes
+    : Object.keys(TV_SIZE_PRESETS).map((value) => Number(value));
+
+  return configured
+    .map((value) => Number(value))
+    .filter((value, index, list) => Number.isFinite(value) && list.indexOf(value) === index && getTvPresetSize(value));
+}
+
+function formatTvDimension(value) {
+  return Number(value).toFixed(1).replace(/\.0$/, '');
+}
+
+function facePixelToLocalPosition(face, x, y, imageWidth, imageHeight, radius) {
+  const u = (x / imageWidth) * 2 - 1;
+  const v = 1 - (y / imageHeight) * 2;
+
+  switch (face) {
+    case 'front':
+      return new THREE.Vector3(-u * radius, v * radius, radius);
+    case 'back':
+      return new THREE.Vector3(u * radius, v * radius, -radius);
+    case 'right':
+      return new THREE.Vector3(radius, v * radius, u * radius);
+    case 'left':
+      return new THREE.Vector3(-radius, v * radius, -u * radius);
+    case 'up':
+      return new THREE.Vector3(-u * radius, radius, -v * radius);
+    case 'down':
+      return new THREE.Vector3(-u * radius, -radius, v * radius);
+    default:
+      return new THREE.Vector3(-u * radius, v * radius, radius);
+  }
+}
+
+function getFaceInwardNormal(face) {
+  const normals = {
+    front: new THREE.Vector3(0, 0, -1),
+    back: new THREE.Vector3(0, 0, 1),
+    right: new THREE.Vector3(-1, 0, 0),
+    left: new THREE.Vector3(1, 0, 0),
+    up: new THREE.Vector3(0, -1, 0),
+    down: new THREE.Vector3(0, 1, 0),
+  };
+  return (normals[face] || normals.front).clone();
+}
+
+function getFaceInwardQuaternion(face) {
+  const eulerMap = {
+    front: new THREE.Euler(0, Math.PI, 0),
+    back: new THREE.Euler(0, 0, 0),
+    right: new THREE.Euler(0, -Math.PI / 2, 0),
+    left: new THREE.Euler(0, Math.PI / 2, 0),
+    up: new THREE.Euler(Math.PI / 2, 0, 0),
+    down: new THREE.Euler(-Math.PI / 2, 0, 0),
+  };
+  return new THREE.Quaternion().setFromEuler(eulerMap[face] || eulerMap.front);
 }
 
 function getRoomKey(scene) {
@@ -244,6 +342,7 @@ class OfflineViewer {
     this.sidebar = document.getElementById('sidebar');
     this.toggleSidebar = document.getElementById('toggle-sidebar');
     this.togglePlan = document.getElementById('toggle-plan');
+    this.toggleHud = document.getElementById('toggle-hud');
     this.toggleLanguage = document.getElementById('toggle-language');
     this.togglePlanPanel = document.getElementById('toggle-plan-panel');
     this.planPanel = document.getElementById('plan-panel');
@@ -252,6 +351,19 @@ class OfflineViewer {
     this.planStage = document.getElementById('plan-stage');
     this.planImage = document.getElementById('plan-image');
     this.planSpotsLayer = document.getElementById('plan-spots');
+    this.tvOverlayPanel = document.getElementById('tv-overlay-panel');
+    this.tvOverlayTitle = document.getElementById('tv-overlay-title');
+    this.tvOverlayCaption = document.getElementById('tv-overlay-caption');
+    this.tvSizeToolbar = document.getElementById('tv-size-toolbar');
+    this.tvVideoFileLabel = document.getElementById('tv-video-file-label');
+    this.tvVideoFileInput = document.getElementById('tv-video-file');
+    this.tvAdjustLabel = document.getElementById('tv-adjust-label');
+    this.tvAdjustUpButton = document.getElementById('tv-adjust-up');
+    this.tvAdjustLeftButton = document.getElementById('tv-adjust-left');
+    this.tvAdjustResetButton = document.getElementById('tv-adjust-reset');
+    this.tvAdjustRightButton = document.getElementById('tv-adjust-right');
+    this.tvAdjustDownButton = document.getElementById('tv-adjust-down');
+    this.tvOverlayMeta = document.getElementById('tv-overlay-meta');
 
     this.width = this.viewerEl.clientWidth || 1;
     this.height = this.viewerEl.clientHeight || 1;
@@ -270,15 +382,38 @@ class OfflineViewer {
     this.lastInteractionAt = performance.now();
     this.idleRotateDelay = 4500;
     this.idleRotateSpeed = 2.4;
+    this.hotspotLabelVisible = window.localStorage.getItem(HOTSPOT_LABEL_VISIBILITY_STORAGE_KEY) !== '0';
     this.plan = this.normalizePlan(manifest.plan);
+    this.tvOverlayConfig = this.normalizeTvOverlayConfig(manifest.tvOverlay);
+    this.tvSizeButtons = [];
+    this.tvOverlayState = {
+      sceneConfig: null,
+      selectedSize: null,
+      frameMesh: null,
+      screenMesh: null,
+      frameMaterial: null,
+      screenMaterial: null,
+      texture: null,
+      videoTexture: null,
+      canvas: null,
+      context: null,
+      video: null,
+      rafId: 0,
+      videoFrameRequestId: 0,
+      objectUrl: null,
+      offsetPx: { x: 0, y: 0 },
+    };
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.renderer.setSize(this.width, this.height);
+    this.renderer.outputEncoding = THREE.sRGBEncoding;
     this.viewerEl.appendChild(this.renderer.domElement);
 
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(this.fov, this.width / this.height, 1, 11000);
+
+    this.buildTvOverlayPanel();
 
     this.bindEvents();
     this.setLanguage(this.language, { persist: false });
@@ -294,6 +429,32 @@ class OfflineViewer {
 
   getLanguageLabel(language) {
     return LANGUAGE_LABELS[language] || String(language).toUpperCase();
+  }
+
+  updateHudToggleLabel() {
+    if (!this.toggleHud) {
+      return;
+    }
+    this.toggleHud.textContent = this.hotspotLabelVisible ? this.t('hideHudButton') : this.t('showHudButton');
+  }
+
+  setHudVisible(visible, { persist = true } = {}) {
+    this.hotspotLabelVisible = Boolean(visible);
+    if (persist) {
+      window.localStorage.setItem(HOTSPOT_LABEL_VISIBILITY_STORAGE_KEY, this.hotspotLabelVisible ? '1' : '0');
+    }
+    if (this.hotspotsLayer) {
+      this.hotspotsLayer.classList.toggle('labels-hidden', !this.hotspotLabelVisible);
+    }
+    for (const entry of this.hotspotButtons) {
+      if (this.hotspotLabelVisible) {
+        entry.element.title = entry.hotspot.targetDisplayTitle;
+      } else {
+        entry.element.removeAttribute('title');
+      }
+    }
+    this.updateHudToggleLabel();
+    this.rebuildHotspots();
   }
 
   getNextLanguage() {
@@ -373,6 +534,7 @@ class OfflineViewer {
     this.toggleSidebar.textContent = this.t('scenesButton');
     this.planTitle.textContent = this.t('planTitle');
     this.planImage.alt = this.t('planTitle');
+    this.updateHudToggleLabel();
     const nextLanguage = this.getNextLanguage();
     this.toggleLanguage.textContent = this.getLanguageLabel(nextLanguage);
     this.toggleLanguage.title = `Switch language (${this.getLanguageLabel(nextLanguage)})`;
@@ -385,6 +547,9 @@ class OfflineViewer {
     this.refreshSceneListState();
     this.refreshPlanState();
     this.rebuildHotspots();
+    this.updateTvOverlayUi();
+    this.drawTvFrame();
+    this.setHudVisible(this.hotspotLabelVisible, { persist: false });
     this.requestRender();
   }
 
@@ -422,6 +587,599 @@ class OfflineViewer {
     };
   }
 
+  normalizeTvOverlayConfig(config) {
+    if (!config || !config.scenes || typeof config.scenes !== 'object') {
+      return null;
+    }
+
+    const normalizedScenes = {};
+    for (const [sceneId, sceneConfig] of Object.entries(config.scenes)) {
+      if (!this.sceneMap.has(sceneId) || !sceneConfig) {
+        continue;
+      }
+
+      const face = String(sceneConfig.face || 'front');
+      const imageWidth = Math.max(1, Number(sceneConfig.imageSize?.width) || 1500);
+      const imageHeight = Math.max(1, Number(sceneConfig.imageSize?.height) || 1500);
+      const centerX = Number(sceneConfig.center?.x);
+      const centerY = Number(sceneConfig.center?.y);
+      const mmPerPixelX = Number(sceneConfig.mmPerPixel?.x);
+      const mmPerPixelY = Number(sceneConfig.mmPerPixel?.y);
+      const sizes = buildTvSizeList(sceneConfig);
+
+      if (!Number.isFinite(centerX) || !Number.isFinite(centerY) || !Number.isFinite(mmPerPixelX) || !Number.isFinite(mmPerPixelY) || !sizes.length) {
+        continue;
+      }
+
+      normalizedScenes[sceneId] = {
+        face,
+        imageWidth,
+        imageHeight,
+        center: { x: centerX, y: centerY },
+        bounds: {
+          left: Number(sceneConfig.bounds?.left),
+          right: Number(sceneConfig.bounds?.right),
+          top: Number(sceneConfig.bounds?.top),
+          bottom: Number(sceneConfig.bounds?.bottom),
+        },
+        mmPerPixel: { x: mmPerPixelX, y: mmPerPixelY },
+        borderPx: Math.max(0, Number(sceneConfig.borderPx) || 0),
+        defaultSize: sizes.includes(Number(sceneConfig.defaultSize)) ? Number(sceneConfig.defaultSize) : sizes[0],
+        sizes,
+        defaultVideo: typeof sceneConfig.defaultVideo === 'string' ? sceneConfig.defaultVideo : '',
+      };
+    }
+
+    return Object.keys(normalizedScenes).length ? { scenes: normalizedScenes } : null;
+  }
+
+  buildTvOverlayPanel() {
+    if (!this.tvOverlayPanel) {
+      return;
+    }
+    this.tvOverlayPanel.classList.toggle('hidden', !this.tvOverlayConfig);
+    if (!this.tvOverlayConfig) {
+      return;
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = TV_CANVAS_SIZE.width;
+    canvas.height = TV_CANVAS_SIZE.height;
+    const context = canvas.getContext('2d');
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.encoding = THREE.sRGBEncoding;
+    texture.minFilter = THREE.LinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    texture.generateMipmaps = false;
+
+    const video = document.createElement('video');
+    video.crossOrigin = 'anonymous';
+    video.loop = true;
+    video.muted = true;
+    video.playsInline = true;
+    video.preload = 'auto';
+
+    const videoTexture = new THREE.VideoTexture(video);
+    videoTexture.encoding = THREE.sRGBEncoding;
+    videoTexture.minFilter = THREE.LinearFilter;
+    videoTexture.magFilter = THREE.LinearFilter;
+    videoTexture.generateMipmaps = false;
+
+    this.tvOverlayState.canvas = canvas;
+    this.tvOverlayState.context = context;
+    this.tvOverlayState.texture = texture;
+    this.tvOverlayState.videoTexture = videoTexture;
+    this.tvOverlayState.video = video;
+
+    video.addEventListener('play', () => {
+      this.startTvVideoLoop();
+      this.rebuildTvOverlayMesh();
+      this.requestRender();
+      this.updateTvOverlayMeta();
+    });
+    video.addEventListener('pause', () => {
+      this.stopTvVideoLoop();
+      this.updateTvOverlayMeta();
+      this.requestRender();
+    });
+    video.addEventListener('ended', () => {
+      this.restartTvVideo();
+    });
+    video.addEventListener('stalled', () => {
+      this.restartTvVideo();
+    });
+    video.addEventListener('waiting', () => {
+      this.requestRender();
+    });
+    video.addEventListener('error', () => {
+      this.stopTvVideoLoop();
+      this.drawTvPlaceholder();
+      this.updateTvOverlayMeta();
+      this.requestRender();
+    });
+    video.addEventListener('loadeddata', () => {
+      this.rebuildTvOverlayMesh();
+      this.requestRender();
+      const playPromise = video.play();
+      if (playPromise && typeof playPromise.catch === 'function') {
+        playPromise.catch(() => {
+          this.rebuildTvOverlayMesh();
+          this.requestRender();
+        });
+      }
+      this.updateTvOverlayMeta();
+    });
+
+    this.drawTvPlaceholder();
+  }
+
+  buildTvSizeButtons(sceneConfig) {
+    if (!this.tvSizeToolbar) {
+      return;
+    }
+    this.tvSizeToolbar.innerHTML = '';
+    this.tvSizeButtons = sceneConfig.sizes.map((size) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'tv-size-button';
+      button.dataset.size = String(size);
+      button.textContent = this.t('tvSizeLabel', { size });
+      button.addEventListener('click', () => {
+        this.markInteraction();
+        this.setTvOverlaySize(size);
+      });
+      this.tvSizeToolbar.appendChild(button);
+      return button;
+    });
+    this.refreshTvSizeButtons();
+  }
+
+  updateTvOverlayUi() {
+    if (!this.tvOverlayPanel) {
+      return;
+    }
+    const sceneConfig = this.getCurrentTvOverlayConfig();
+    const visible = Boolean(sceneConfig);
+    this.tvOverlayPanel.classList.toggle('hidden', !visible);
+    if (!visible) {
+      return;
+    }
+
+    this.tvOverlayTitle.textContent = this.t('tvOverlayTitle');
+    this.tvOverlayCaption.textContent = this.t('tvOverlayCaption');
+    this.tvVideoFileLabel.textContent = this.t('tvVideoFileLabel');
+    this.tvAdjustLabel.textContent = this.t('tvAdjustLabel');
+    this.tvAdjustResetButton.textContent = this.t('tvAdjustReset');
+    this.buildTvSizeButtons(sceneConfig);
+    this.refreshTvSizeButtons();
+    this.updateTvOverlayMeta();
+  }
+
+  refreshTvSizeButtons() {
+    const selectedSize = this.tvOverlayState.selectedSize;
+    for (const button of this.tvSizeButtons) {
+      button.classList.toggle('active', Number(button.dataset.size) === selectedSize);
+    }
+  }
+
+  getCurrentTvOverlayConfig() {
+    if (!this.tvOverlayConfig || !this.currentScene) {
+      return null;
+    }
+    return this.tvOverlayConfig.scenes[this.currentScene.id] || null;
+  }
+
+  getTvScreenMetrics(sceneConfig, selectedSize) {
+    const tvSize = getTvPresetSize(selectedSize);
+    if (!sceneConfig || !tvSize) {
+      return null;
+    }
+
+    const borderWidthMm = sceneConfig.borderPx * sceneConfig.mmPerPixel.x;
+    const borderHeightMm = sceneConfig.borderPx * sceneConfig.mmPerPixel.y;
+    const totalWidthPx = (tvSize.width * 10 + borderWidthMm * 2) / sceneConfig.mmPerPixel.x;
+    const totalHeightPx = (tvSize.height * 10 + borderHeightMm * 2) / sceneConfig.mmPerPixel.y;
+
+    return {
+      tvSize,
+      totalWidthPx,
+      totalHeightPx,
+    };
+  }
+
+  clampTvOffset(sceneConfig, selectedSize, offset) {
+    const metrics = this.getTvScreenMetrics(sceneConfig, selectedSize);
+    if (!metrics) {
+      return { x: 0, y: 0 };
+    }
+
+    const bounds = sceneConfig.bounds || {};
+    const hasBounds = ['left', 'right', 'top', 'bottom'].every((key) => Number.isFinite(bounds[key]));
+    if (!hasBounds) {
+      return { x: Number(offset?.x) || 0, y: Number(offset?.y) || 0 };
+    }
+
+    const halfWidth = metrics.totalWidthPx / 2;
+    const halfHeight = metrics.totalHeightPx / 2;
+    const minX = bounds.left + halfWidth - sceneConfig.center.x;
+    const maxX = bounds.right - halfWidth - sceneConfig.center.x;
+    const minY = bounds.top + halfHeight - sceneConfig.center.y;
+    const maxY = bounds.bottom - halfHeight - sceneConfig.center.y;
+
+    return {
+      x: clamp(Number(offset?.x) || 0, minX, maxX),
+      y: clamp(Number(offset?.y) || 0, minY, maxY),
+    };
+  }
+
+  nudgeTvOffset(deltaX, deltaY) {
+    const sceneConfig = this.getCurrentTvOverlayConfig();
+    if (!sceneConfig) {
+      return;
+    }
+    const selectedSize = this.tvOverlayState.selectedSize || sceneConfig.defaultSize;
+    this.tvOverlayState.offsetPx = this.clampTvOffset(sceneConfig, selectedSize, {
+      x: this.tvOverlayState.offsetPx.x + deltaX,
+      y: this.tvOverlayState.offsetPx.y + deltaY,
+    });
+    this.rebuildTvOverlayMesh();
+    this.updateTvOverlayMeta();
+    this.requestRender();
+  }
+
+  resetTvOffset() {
+    const sceneConfig = this.getCurrentTvOverlayConfig();
+    if (!sceneConfig) {
+      return;
+    }
+    const selectedSize = this.tvOverlayState.selectedSize || sceneConfig.defaultSize;
+    this.tvOverlayState.offsetPx = this.clampTvOffset(sceneConfig, selectedSize, { x: 0, y: 0 });
+    this.rebuildTvOverlayMesh();
+    this.updateTvOverlayMeta();
+    this.requestRender();
+  }
+
+  setTvOverlaySize(size) {
+    const sceneConfig = this.getCurrentTvOverlayConfig();
+    if (!sceneConfig || !sceneConfig.sizes.includes(size)) {
+      return;
+    }
+    this.tvOverlayState.selectedSize = size;
+    this.tvOverlayState.offsetPx = this.clampTvOffset(sceneConfig, size, this.tvOverlayState.offsetPx);
+    this.refreshTvSizeButtons();
+    this.rebuildTvOverlayMesh();
+    this.updateTvOverlayMeta();
+    this.requestRender();
+  }
+
+  updateTvOverlayScene() {
+    const sceneConfig = this.getCurrentTvOverlayConfig();
+    if (!sceneConfig) {
+      if (this.tvOverlayState.video) {
+        this.tvOverlayState.video.pause();
+      }
+      this.clearTvOverlayMesh();
+      this.stopTvVideoLoop();
+      if (this.tvOverlayPanel) {
+        this.tvOverlayPanel.classList.add('hidden');
+      }
+      return;
+    }
+
+    this.tvOverlayState.sceneConfig = sceneConfig;
+    if (!sceneConfig.sizes.includes(this.tvOverlayState.selectedSize)) {
+      this.tvOverlayState.selectedSize = sceneConfig.defaultSize;
+    }
+    this.tvOverlayState.offsetPx = this.clampTvOffset(
+      sceneConfig,
+      this.tvOverlayState.selectedSize,
+      this.tvOverlayState.offsetPx,
+    );
+    if (!this.tvOverlayState.video?.src && sceneConfig.defaultVideo) {
+      this.loadTvVideoFromUrl(sceneConfig.defaultVideo);
+    }
+    this.updateTvOverlayUi();
+    this.rebuildTvOverlayMesh();
+    this.drawTvFrame();
+  }
+
+  clearTvOverlayMesh() {
+    const { frameMesh, screenMesh, frameMaterial, screenMaterial } = this.tvOverlayState;
+    if (frameMesh) {
+      this.scene.remove(frameMesh);
+      frameMesh.geometry.dispose();
+      this.tvOverlayState.frameMesh = null;
+    }
+    if (screenMesh) {
+      this.scene.remove(screenMesh);
+      screenMesh.geometry.dispose();
+      this.tvOverlayState.screenMesh = null;
+    }
+    if (frameMaterial) {
+      frameMaterial.dispose();
+      this.tvOverlayState.frameMaterial = null;
+    }
+    if (screenMaterial) {
+      screenMaterial.dispose();
+      this.tvOverlayState.screenMaterial = null;
+    }
+  }
+
+  rebuildTvOverlayMesh() {
+    const sceneConfig = this.getCurrentTvOverlayConfig();
+    if (!sceneConfig || !this.tvOverlayState.texture) {
+      this.clearTvOverlayMesh();
+      return;
+    }
+
+    const selectedSize = this.tvOverlayState.selectedSize || sceneConfig.defaultSize;
+    const tvSize = getTvPresetSize(selectedSize);
+    if (!tvSize) {
+      return;
+    }
+
+    this.clearTvOverlayMesh();
+
+    const metrics = this.getTvScreenMetrics(sceneConfig, selectedSize);
+    const totalWidthPx = metrics.totalWidthPx;
+    const totalHeightPx = metrics.totalHeightPx;
+    const screenWidthPx = (tvSize.width * 10) / sceneConfig.mmPerPixel.x;
+    const screenHeightPx = (tvSize.height * 10) / sceneConfig.mmPerPixel.y;
+    const radius = 5000;
+    const frameWidth = (totalWidthPx / sceneConfig.imageWidth) * radius * 2;
+    const frameHeight = (totalHeightPx / sceneConfig.imageHeight) * radius * 2;
+    const screenWidth = (screenWidthPx / sceneConfig.imageWidth) * radius * 2;
+    const screenHeight = (screenHeightPx / sceneConfig.imageHeight) * radius * 2;
+    const frameGeometry = new THREE.PlaneGeometry(frameWidth, frameHeight);
+    const screenGeometry = new THREE.PlaneGeometry(screenWidth, screenHeight);
+    const frameMaterial = new THREE.MeshBasicMaterial({
+      color: 0x000000,
+      toneMapped: false,
+      side: THREE.FrontSide,
+    });
+    const screenMap = this.tvOverlayState.video && this.tvOverlayState.video.readyState >= 2
+      ? this.tvOverlayState.videoTexture
+      : this.tvOverlayState.texture;
+    const screenMaterial = new THREE.MeshBasicMaterial({
+      map: screenMap,
+      toneMapped: false,
+      side: THREE.FrontSide,
+      depthWrite: false,
+    });
+    screenMaterial.polygonOffset = true;
+    screenMaterial.polygonOffsetFactor = -2;
+    screenMaterial.polygonOffsetUnits = -2;
+    const frameMesh = new THREE.Mesh(frameGeometry, frameMaterial);
+    const screenMesh = new THREE.Mesh(screenGeometry, screenMaterial);
+    const center = facePixelToLocalPosition(
+      sceneConfig.face,
+      sceneConfig.center.x + this.tvOverlayState.offsetPx.x,
+      sceneConfig.center.y + this.tvOverlayState.offsetPx.y,
+      sceneConfig.imageWidth,
+      sceneConfig.imageHeight,
+      radius,
+    );
+    const inwardQuat = getFaceInwardQuaternion(sceneConfig.face);
+    const inwardNormal = getFaceInwardNormal(sceneConfig.face);
+    const frameOffset = inwardNormal.clone().multiplyScalar(6);
+    const screenOffset = inwardNormal.clone().multiplyScalar(6.2);
+    frameMesh.position.copy(center).add(frameOffset);
+    screenMesh.position.copy(center).add(screenOffset);
+    frameMesh.quaternion.copy(inwardQuat);
+    screenMesh.quaternion.copy(inwardQuat);
+    this.scene.add(frameMesh);
+    this.scene.add(screenMesh);
+
+    this.tvOverlayState.frameMesh = frameMesh;
+    this.tvOverlayState.screenMesh = screenMesh;
+    this.tvOverlayState.frameMaterial = frameMaterial;
+    this.tvOverlayState.screenMaterial = screenMaterial;
+  }
+
+  drawTvPlaceholder() {
+    const { context, canvas } = this.tvOverlayState;
+    if (!context || !canvas) {
+      return;
+    }
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.fillStyle = '#000000';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.fillStyle = '#151515';
+    context.fillRect(3, 3, canvas.width - 6, canvas.height - 6);
+    context.fillStyle = '#f5f5f5';
+    context.font = '36px sans-serif';
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillText(TV_PLACEHOLDER_TEXT[this.language] || TV_PLACEHOLDER_TEXT.en, canvas.width / 2, canvas.height / 2);
+    this.tvOverlayState.texture.needsUpdate = true;
+  }
+
+  drawTvFrame() {
+    const { context, canvas, video, texture } = this.tvOverlayState;
+    if (!context || !canvas || !texture) {
+      return;
+    }
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.fillStyle = '#000000';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+
+    const innerX = 3;
+    const innerY = 3;
+    const innerWidth = canvas.width - 6;
+    const innerHeight = canvas.height - 6;
+
+    if (video && video.readyState >= 2 && !video.paused && !video.ended) {
+      const videoAspect = video.videoWidth / video.videoHeight;
+      const screenAspect = innerWidth / innerHeight;
+      let drawWidth = innerWidth;
+      let drawHeight = innerHeight;
+      let drawX = innerX;
+      let drawY = innerY;
+
+      if (videoAspect > screenAspect) {
+        drawHeight = innerWidth / videoAspect;
+        drawY = innerY + (innerHeight - drawHeight) / 2;
+      } else {
+        drawWidth = innerHeight * videoAspect;
+        drawX = innerX + (innerWidth - drawWidth) / 2;
+      }
+
+      context.drawImage(video, drawX, drawY, drawWidth, drawHeight);
+    } else {
+      context.fillStyle = '#151515';
+      context.fillRect(innerX, innerY, innerWidth, innerHeight);
+      context.fillStyle = '#f5f5f5';
+      context.font = '36px sans-serif';
+      context.textAlign = 'center';
+      context.textBaseline = 'middle';
+      context.fillText(TV_PLACEHOLDER_TEXT[this.language] || TV_PLACEHOLDER_TEXT.en, canvas.width / 2, canvas.height / 2);
+    }
+
+    texture.needsUpdate = true;
+  }
+
+  stopTvVideoLoop() {
+    const { video } = this.tvOverlayState;
+    if (video && typeof video.cancelVideoFrameCallback === 'function' && this.tvOverlayState.videoFrameRequestId) {
+      video.cancelVideoFrameCallback(this.tvOverlayState.videoFrameRequestId);
+      this.tvOverlayState.videoFrameRequestId = 0;
+    }
+    if (this.tvOverlayState.rafId) {
+      window.cancelAnimationFrame(this.tvOverlayState.rafId);
+      this.tvOverlayState.rafId = 0;
+    }
+  }
+
+  startTvVideoLoop() {
+    const { video } = this.tvOverlayState;
+    if (!video) {
+      return;
+    }
+
+    this.stopTvVideoLoop();
+
+    if (typeof video.requestVideoFrameCallback === 'function') {
+      const tick = () => {
+        this.tvOverlayState.videoFrameRequestId = 0;
+        if (!video || video.paused || video.ended) {
+          return;
+        }
+        this.requestRender();
+        this.tvOverlayState.videoFrameRequestId = video.requestVideoFrameCallback(tick);
+      };
+      this.tvOverlayState.videoFrameRequestId = video.requestVideoFrameCallback(tick);
+      return;
+    }
+
+    const tick = () => {
+      this.tvOverlayState.rafId = 0;
+      if (!video || video.paused || video.ended) {
+        return;
+      }
+      this.requestRender();
+      this.tvOverlayState.rafId = window.requestAnimationFrame(tick);
+    };
+    this.tvOverlayState.rafId = window.requestAnimationFrame(tick);
+  }
+
+  restartTvVideo() {
+    const { video } = this.tvOverlayState;
+    if (!video || !video.src) {
+      return;
+    }
+
+    const resume = () => {
+      const playPromise = video.play();
+      if (playPromise && typeof playPromise.catch === 'function') {
+        playPromise.catch(() => {});
+      }
+    };
+
+    if (video.ended || video.currentTime >= Math.max(0, (video.duration || 0) - 0.05)) {
+      try {
+        video.currentTime = 0;
+      } catch (_) {
+      }
+      resume();
+      return;
+    }
+
+    resume();
+  }
+
+  updateTvOverlayMeta() {
+    const sceneConfig = this.getCurrentTvOverlayConfig();
+    if (!sceneConfig || !this.tvOverlayMeta) {
+      return;
+    }
+    const size = getTvPresetSize(this.tvOverlayState.selectedSize || sceneConfig.defaultSize);
+    if (!size) {
+      return;
+    }
+    const video = this.tvOverlayState.video;
+    const isPlaying = Boolean(video && video.readyState >= 2 && !video.paused && !video.ended);
+    this.tvOverlayMeta.textContent = isPlaying
+      ? this.t('tvMetaPlaying', {
+        size: this.tvOverlayState.selectedSize,
+        width: formatTvDimension(size.width),
+        height: formatTvDimension(size.height),
+        x: sceneConfig.center.x + this.tvOverlayState.offsetPx.x,
+        y: sceneConfig.center.y + this.tvOverlayState.offsetPx.y,
+        offsetX: this.tvOverlayState.offsetPx.x,
+        offsetY: this.tvOverlayState.offsetPx.y,
+      })
+      : this.t('tvMetaIdle', {
+        x: sceneConfig.center.x + this.tvOverlayState.offsetPx.x,
+        y: sceneConfig.center.y + this.tvOverlayState.offsetPx.y,
+        width: formatTvDimension(size.width),
+        height: formatTvDimension(size.height),
+        offsetX: this.tvOverlayState.offsetPx.x,
+        offsetY: this.tvOverlayState.offsetPx.y,
+      });
+  }
+
+  loadTvVideoFromFile(file) {
+    if (!file) {
+      return;
+    }
+    const { video } = this.tvOverlayState;
+    if (!video) {
+      return;
+    }
+    video.pause();
+    if (this.tvOverlayState.objectUrl) {
+      URL.revokeObjectURL(this.tvOverlayState.objectUrl);
+    }
+    const objectUrl = URL.createObjectURL(file);
+    this.tvOverlayState.objectUrl = objectUrl;
+    video.src = objectUrl;
+    video.load();
+    this.restartTvVideo();
+    this.updateTvOverlayMeta();
+  }
+
+  loadTvVideoFromUrl(url) {
+    const { video } = this.tvOverlayState;
+    if (!video) {
+      return;
+    }
+
+    const resolvedUrl = String(url || '').trim();
+    if (!resolvedUrl) {
+      return;
+    }
+
+    video.pause();
+    if (this.tvOverlayState.objectUrl) {
+      URL.revokeObjectURL(this.tvOverlayState.objectUrl);
+      this.tvOverlayState.objectUrl = null;
+    }
+    video.src = resolvedUrl;
+    video.load();
+    this.restartTvVideo();
+    this.updateTvOverlayMeta();
+  }
+
   bindEvents() {
     window.addEventListener('resize', () => this.handleResize());
     this.viewerEl.addEventListener('pointerdown', (event) => this.handlePointerDown(event));
@@ -441,10 +1199,51 @@ class OfflineViewer {
       this.markInteraction();
       this.setPlanCollapsed(!this.planPanel.classList.contains('collapsed'));
     });
+    this.toggleHud.addEventListener('click', () => {
+      this.markInteraction();
+      this.setHudVisible(!this.hotspotLabelVisible);
+    });
     this.toggleLanguage.addEventListener('click', () => {
       this.markInteraction();
       this.setLanguage(this.getNextLanguage());
     });
+    if (this.tvVideoFileInput) {
+      this.tvVideoFileInput.addEventListener('change', (event) => {
+        const [file] = event.target.files || [];
+        this.markInteraction();
+        this.loadTvVideoFromFile(file || null);
+      });
+    }
+    if (this.tvAdjustUpButton) {
+      this.tvAdjustUpButton.addEventListener('click', () => {
+        this.markInteraction();
+        this.nudgeTvOffset(0, -1);
+      });
+    }
+    if (this.tvAdjustLeftButton) {
+      this.tvAdjustLeftButton.addEventListener('click', () => {
+        this.markInteraction();
+        this.nudgeTvOffset(-1, 0);
+      });
+    }
+    if (this.tvAdjustRightButton) {
+      this.tvAdjustRightButton.addEventListener('click', () => {
+        this.markInteraction();
+        this.nudgeTvOffset(1, 0);
+      });
+    }
+    if (this.tvAdjustDownButton) {
+      this.tvAdjustDownButton.addEventListener('click', () => {
+        this.markInteraction();
+        this.nudgeTvOffset(0, 1);
+      });
+    }
+    if (this.tvAdjustResetButton) {
+      this.tvAdjustResetButton.addEventListener('click', () => {
+        this.markInteraction();
+        this.resetTvOffset();
+      });
+    }
   }
 
   buildSceneList() {
@@ -586,6 +1385,7 @@ class OfflineViewer {
       if (this.currentTextureKey !== scene.id) {
         return;
       }
+      texture.encoding = THREE.sRGBEncoding;
       this.scene.background = texture;
       this.requestRender();
     });
@@ -594,6 +1394,7 @@ class OfflineViewer {
     this.rebuildHotspots();
     this.refreshSceneListState();
     this.refreshPlanState();
+    this.updateTvOverlayScene();
     this.requestRender();
   }
 
@@ -626,7 +1427,21 @@ class OfflineViewer {
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'hotspot';
-      button.textContent = hotspot.targetDisplayTitle;
+      button.setAttribute('aria-label', hotspot.targetDisplayTitle);
+      if (this.hotspotLabelVisible) {
+        button.title = hotspot.targetDisplayTitle;
+      }
+
+      const dot = document.createElement('span');
+      dot.className = 'hotspot-dot';
+      dot.setAttribute('aria-hidden', 'true');
+
+      const label = document.createElement('span');
+      label.className = 'hotspot-label';
+      label.textContent = hotspot.targetDisplayTitle;
+
+      button.appendChild(dot);
+      button.appendChild(label);
       button.addEventListener('click', () => {
         this.markInteraction();
         this.loadScene(hotspot.targetScene);

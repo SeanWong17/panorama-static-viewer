@@ -165,6 +165,33 @@ def validate_manifest(manifest: dict[str, Any], source_dir: Path) -> tuple[dict[
             if not isinstance(scene_id, str) or scene_id not in scene_id_set:
                 raise ValueError(f"plan.spots references missing sceneId: {scene_id}")
 
+    tv_overlay = manifest.get("tvOverlay")
+    if tv_overlay is not None:
+        if not isinstance(tv_overlay, dict):
+            raise ValueError("tvOverlay must be an object when provided")
+
+        scenes_config = tv_overlay.get("scenes")
+        if scenes_config is not None:
+            if not isinstance(scenes_config, dict):
+                raise ValueError("tvOverlay.scenes must be an object")
+
+            for scene_id, scene_config in scenes_config.items():
+                if scene_id not in scene_id_set:
+                    raise ValueError(f"tvOverlay references missing scene: {scene_id}")
+                if not isinstance(scene_config, dict):
+                    raise ValueError(f"tvOverlay scene config must be an object: {scene_id}")
+
+                default_video = scene_config.get("defaultVideo")
+                if default_video:
+                    if not isinstance(default_video, str):
+                        raise ValueError(f"tvOverlay.{scene_id}.defaultVideo must be a string")
+                    rel_path, _ = ensure_relative_path(
+                        source_dir,
+                        default_video,
+                        f"tvOverlay.{scene_id}.defaultVideo",
+                    )
+                    asset_paths[rel_path.as_posix()] = rel_path
+
     return normalized, sorted(asset_paths.values(), key=lambda path: path.as_posix())
 
 

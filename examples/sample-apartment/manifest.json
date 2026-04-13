@@ -15,6 +15,35 @@
   "startScene": "scene-3",
   "levelId": "level-1",
   "sceneCount": 7,
+  "tvOverlay": {
+    "scenes": {
+      "scene-3": {
+        "face": "front",
+        "imageSize": {
+          "width": 1500,
+          "height": 1500
+        },
+        "center": {
+          "x": 612,
+          "y": 749
+        },
+        "bounds": {
+          "left": 293,
+          "right": 932,
+          "top": 520,
+          "bottom": 977
+        },
+        "mmPerPixel": {
+          "x": 4.57,
+          "y": 4.52
+        },
+        "borderPx": 3,
+        "defaultSize": 75,
+        "sizes": [55, 65, 75, 85, 98, 100],
+        "defaultVideo": "assets/videos/test.mp4"
+      }
+    }
+  },
   "plan": {
     "image": "assets/plan-level-1.jpg",
     "canvas": {

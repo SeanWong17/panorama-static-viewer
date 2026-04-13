@@ -10,6 +10,7 @@ Panorama Static Viewer 用于把本地立方体贴图资源打包成静态全景
 - 带清单校验的本地打包脚本
 - 场景列表、热点跳转和户型图导航
 - 内置 `en` 和 `zh-CN` 界面切换
+- 场景 3 电视墙视频映射，支持本地视频预览、尺寸切换和位置微调
 - 用于在线预览的 GitHub Pages 工作流
 - 脱敏示例数据，便于本地验证
 
@@ -24,6 +25,9 @@ panorama-static-viewer/
   vendor/
   examples/
     sample-apartment/
+      assets/videos/test.mp4
+  media/
+    tv-overlay-demo.gif
 ```
 
 ## 本地预览
@@ -47,6 +51,10 @@ python3 -m http.server 8000
 浏览器打开 `http://127.0.0.1:8000/`。
 
 页面会通过 `fetch` 读取 `manifest.json`，因此不要直接双击 `index.html` 打开。
+
+示例户型在场景 3 内置了一段默认电视演示视频；运行时也可以从本地重新选择别的视频文件。
+
+![TV overlay demo](./media/tv-overlay-demo.gif)
 
 ## GitHub Pages
 
@@ -142,6 +150,30 @@ https://<github-user>.github.io/<repository-name>/
 ```
 
 `plan`、`roomIndex`、`obsPicId`、`metaLabel` 以及本地化字段都会在输出包中保留。
+
+可选的电视映射配置示例：
+
+```json
+{
+  "tvOverlay": {
+    "scenes": {
+      "scene-3": {
+        "face": "front",
+        "imageSize": { "width": 1500, "height": 1500 },
+        "center": { "x": 612, "y": 749 },
+        "bounds": { "left": 293, "right": 932, "top": 520, "bottom": 977 },
+        "mmPerPixel": { "x": 4.57, "y": 4.52 },
+        "borderPx": 3,
+        "defaultSize": 75,
+        "sizes": [55, 65, 75, 85, 98, 100],
+        "defaultVideo": "assets/videos/test.mp4"
+      }
+    }
+  }
+}
+```
+
+`defaultVideo` 必须指向会被一起打包的本地资源。运行时界面只支持选择本地文件，不支持远程 URL。
 
 ## 构建过程
 
